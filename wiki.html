@@ -162,4 +162,21 @@ Diese Seite ist eine Demo eines Wiki-Layouts.
 </div>
 
 </body>
+
 </html>
+
+<button onclick="showUsers()">Alle Benutzer</button>
+
+function showUsers(){
+
+if(!currentUser){showLogin();return}
+
+let html = "<h2>Registrierte Benutzer</h2>";
+
+users.forEach(u=>{
+html += `<p>${u.u}</p>`;
+});
+
+document.getElementById("content").innerHTML = html;
+
+}
