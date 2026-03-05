@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>somedude's wiki</title>
@@ -20,15 +20,16 @@ textarea{height:200px}
 
 <header>
 <h2>somedude's wiki</h2>
-<input class="search" id="search" placeholder="Artikel suchen" oninput="searchArticles()">
+<input class="search" id="search" placeholder="Search articles" oninput="searchArticles()">
 </header>
 
 <div class="container">
 
 <div class="sidebar">
 <b>Navigation</b>
-<button onclick="showArticles()">Alle Artikel</button>
-<button onclick="showCreate()">Artikel erstellen</button>
+<button onclick="showArticles()">All Articles</button>
+<button onclick="showCreate()">Create Article</button>
+<button onclick="showStats()">Statistics</button>
 <button onclick="logout()">Logout</button>
 </div>
 
@@ -50,14 +51,14 @@ localStorage.setItem("wiki_articles",JSON.stringify(articles));
 function showLogin(){
 document.getElementById("content").innerHTML=`
 <h2>Login</h2>
-<input id="loginUser" placeholder="Benutzername">
-<input id="loginPass" type="password" placeholder="Passwort">
+<input id="loginUser" placeholder="Username">
+<input id="loginPass" type="password" placeholder="Password">
 <button onclick="login()">Login</button>
 
-<h3>oder registrieren</h3>
-<input id="regUser" placeholder="Benutzername">
-<input id="regPass" type="password" placeholder="Passwort">
-<button onclick="register()">Registrieren</button>
+<h3>or register</h3>
+<input id="regUser" placeholder="Username">
+<input id="regPass" type="password" placeholder="Password">
+<button onclick="register()">Register</button>
 `;
 }
 
@@ -67,7 +68,7 @@ let p=document.getElementById("regPass").value;
 if(!u||!p)return;
 users.push({u,p});
 save();
-alert("Account erstellt");
+alert("Account created");
 }
 
 function login(){
@@ -79,7 +80,7 @@ currentUser=u;
 localStorage.setItem("wiki_logged_user",u);
 showArticles();
 }else{
-alert("Login falsch");
+alert("Wrong login");
 }
 }
 
@@ -93,10 +94,10 @@ function showCreate(){
 if(!currentUser){showLogin();return}
 
 document.getElementById("content").innerHTML=`
-<h2>Artikel erstellen</h2>
-<input id="title" placeholder="Titel">
-<textarea id="text" placeholder="Artikeltext"></textarea>
-<button onclick="createArticle()">Speichern</button>
+<h2>Create Article</h2>
+<input id="title" placeholder="Title">
+<textarea id="text" placeholder="Article text"></textarea>
+<button onclick="createArticle()">Save</button>
 `;
 }
 
@@ -112,23 +113,68 @@ showArticles();
 function showArticles(list=articles){
 if(!currentUser){showLogin();return}
 
-let html="<h2>Artikel</h2>";
+let html="<h2>Articles</h2>";
 
 list.forEach(a=>{
+let i = articles.indexOf(a);
 html+=`<div class="article">
 <h3>${a.title}</h3>
-<small>von ${a.author}</small>
+<small>by ${a.author}</small>
 <p>${a.text}</p>
+${a.author===currentUser ? `<button onclick="editArticle(${i})">Edit</button>` : ``}
 </div>`;
 });
 
 document.getElementById("content").innerHTML=html;
 }
 
+function editArticle(i){
+let a = articles[i];
+
+document.getElementById("content").innerHTML = `
+<h2>Edit Article</h2>
+<input id="editTitle" value="${a.title}">
+<textarea id="editText">${a.text}</textarea>
+<button onclick="saveEdit(${i})">Save</button>
+<button onclick="showArticles()">Cancel</button>
+`;
+}
+
+function saveEdit(i){
+articles[i].title = document.getElementById("editTitle").value;
+articles[i].text = document.getElementById("editText").value;
+save();
+showArticles();
+}
+
 function searchArticles(){
 let q=document.getElementById("search").value.toLowerCase();
 let filtered=articles.filter(a=>a.title.toLowerCase().includes(q)||a.text.toLowerCase().includes(q));
 showArticles(filtered);
+}
+
+function showStats(){
+if(!currentUser){showLogin();return}
+
+let totalUsers = users.length;
+let totalArticles = articles.length;
+
+let perAuthor = {};
+articles.forEach(a=>{
+if(!perAuthor[a.author]) perAuthor[a.author]=0;
+perAuthor[a.author]++;
+});
+
+let html = `<h2>Wiki Statistics</h2>
+<p><b>Registered users:</b> ${totalUsers}</p>
+<p><b>Total articles:</b> ${totalArticles}</p>
+<h3>Articles per user</h3>`;
+
+for(let author in perAuthor){
+html += `<p>${author}: ${perAuthor[author]}</p>`;
+}
+
+document.getElementById("content").innerHTML = html;
 }
 
 if(currentUser){
@@ -141,42 +187,4 @@ showLogin();
 
 </body>
 </html>
-
-
-<h2>Geschichte</h2>
-<p>
-This Wiki is very cool.
-</p>
-
-<h2>Bedeutung</h2>
-<p>
-This is my Wiki made with Chatgpt!
-</p>
-
-<footer>
-W.I.P
-</footer>
-
-</div>
-</div>
-
-</body>
-
-</html>
-
-<button onclick="showUsers()">Alle Benutzer</button>
-
-function showUsers(){
-
-if(!currentUser){showLogin();return}
-
-let html = "<h2>Registrierte Benutzer</h2>";
-
-users.forEach(u=>{
-html += `<p>${u.u}</p>`;
-});
-
-document.getElementById("content").innerHTML = html;
-
-}
 
