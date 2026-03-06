@@ -206,27 +206,33 @@ import { getAuth, updateProfile } from "firebase/auth";
 
 const auth = getAuth();
 
+import { getAuth, updateProfile } from "firebase/auth";
+import { getFirestore, doc, deleteDoc } from "firebase/firestore";
+
+const auth = getAuth();
+const db = getFirestore();
+
 function changeName(newName) {
   updateProfile(auth.currentUser, {
     displayName: newName
   }).then(() => {
-    alert("Name geändert!");
+    alert("Name changed!");
   }).catch((error) => {
     console.error(error);
   });
 }
 
-<input id="newName" placeholder="Neuer Name">
-<button onclick="changeName(document.getElementById('newName').value)">
-Name ändern
-</button>
-
-import { getFirestore, doc, deleteDoc } from "firebase/firestore";
-
-const db = getFirestore();
-
 async function deletePost(postId) {
   await deleteDoc(doc(db, "posts", postId));
-  alert("Post gelöscht!");
+  alert("Post deleted!");
 }
-<button onclick="deletePost('POST_ID')">Post löschen</button>
+
+<input id="newName" placeholder="New name">
+<button onclick="changeName(document.getElementById('newName').value)">
+Change name
+</button>
+
+<div class="post">
+  <p>My first post</p>
+  <button onclick="deletePost('POST_ID')">Delete post</button>
+</div>
