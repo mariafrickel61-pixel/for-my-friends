@@ -101,12 +101,19 @@ document.getElementById("content").innerHTML=`
 `;
 }
 
-function createArticle(){
+async function createArticle(){
 let title=document.getElementById("title").value;
 let text=document.getElementById("text").value;
-if(!title||!text)return;
-articles.push({title,text,author:currentUser});
-save();
+
+if(!title || !text) return;
+
+await db.collection("articles").add({
+title:title,
+text:text,
+author:currentUser,
+time:Date.now()
+});
+
 showArticles();
 }
 
@@ -121,29 +128,37 @@ html+=`<div class="article">
 <h3>${a.title}</h3>
 <small>by ${a.author}</small>
 <p>${a.text}</p>
-${a.author===currentUser ? `<button onclick="editArticle(${i})">Edit</button>` : ``}
+${a.author===currentUser ? `<button onclick="editArticle('${doc.id}')">Edit</button>` : ``}
 </div>`;
 });
 
 document.getElementById("content").innerHTML=html;
 }
 
-function editArticle(i){
-let a = articles[i];
+async function editArticle(id){
+
+let doc = await db.collection("articles").doc(id).get();
+let a = doc.data();
 
 document.getElementById("content").innerHTML = `
 <h2>Edit Article</h2>
 <input id="editTitle" value="${a.title}">
 <textarea id="editText">${a.text}</textarea>
-<button onclick="saveEdit(${i})">Save</button>
+<button onclick="saveEdit('${id}')">Save</button>
 <button onclick="showArticles()">Cancel</button>
 `;
+
 }
 
-function saveEdit(i){
-articles[i].title = document.getElementById("editTitle").value;
-articles[i].text = document.getElementById("editText").value;
-save();
+async function saveEdit(id){
+let title = document.getElementById("editTitle").value;
+let text = document.getElementById("editText").value;
+
+await db.collection("articles").doc(id).update({
+title:title,
+text:text
+});
+
 showArticles();
 }
 
@@ -184,27 +199,12 @@ showLogin();
 }
 
 </script>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <script>
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCwezHW03yUMwwNQq7JZ-A8CHINXtzmpvs",
-  authDomain: "somedude-s-wiki.firebaseapp.com",
-  projectId: "somedude-s-wiki",
-  storageBucket: "somedude-s-wiki.firebasestorage.app",
-  messagingSenderId: "763935083349",
-  appId: "1:763935083349:web:04a4deafao6615b377bddc"
-};
-
-firebase.initializeApp(firebaseConfig);
-
-const db = firebase.firestore();
-const auth = firebase.auth();
-
-  <script>
 
 const firebaseConfig = {
   apiKey: "AIzaSyCwezHW03yUMwwNQq7JZ-A8CHINXtzmpvs",
@@ -236,18 +236,7 @@ async function deletePost(postId) {
 }
 
 </script>
+
 </body>
 </html>
-
-
-
-<input id="newName" placeholder="New name">
-<button onclick="changeName(document.getElementById('newName').value)">
-Change name
-</button>
-
-<div class="post">
-  <p>My first post</p>
-  <button onclick="deletePost('POST_ID')">Delete post</button>
-</div>
 
