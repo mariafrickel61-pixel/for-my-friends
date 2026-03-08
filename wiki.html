@@ -43,6 +43,15 @@ let users = JSON.parse(localStorage.getItem("wiki_users")) || [];
 let articles = JSON.parse(localStorage.getItem("wiki_articles")) || [];
 let currentUser = localStorage.getItem("wiki_logged_user");
 
+  const admins = ["Somedude (owner :D)"];
+
+  <button onclick="showAdmin()">Admin Panel</button>
+<button onclick="showArticles()">All Articles</button>
+<button onclick="showCreate()">Create Article</button>
+<button onclick="showStats()">Statistics</button>
+<button onclick="showAdmin()">Admin Panel</button>
+<button onclick="logout()">Logout</button>
+  
 function save(){
 localStorage.setItem("wiki_users",JSON.stringify(users));
 localStorage.setItem("wiki_articles",JSON.stringify(articles));
@@ -117,7 +126,31 @@ time:Date.now()
 showArticles();
 }
 
-function showArticles(list=articles){
+async function showArticles(){
+if(!currentUser){showLogin();return}
+
+let snapshot = await db.collection("articles").orderBy("time","desc").get();
+
+let html="<h2>Articles</h2>";
+
+snapshot.forEach(doc=>{
+let a = doc.data();
+
+html+=`
+<div class="article">
+<h3>${a.title}</h3>
+<small>by ${a.author}</small>
+<p>${a.text}</p>
+${a.author===currentUser ? `
+<button onclick="editArticle('${doc.id}')">Edit</button>
+<button onclick="deleteArticle('${doc.id}')">Delete</button>
+` : ``}
+</div>
+`;
+});
+
+document.getElementById("content").innerHTML=html;
+}
 if(!currentUser){showLogin();return}
 
 let html="<h2>Articles</h2>";
@@ -162,23 +195,86 @@ text:text
 showArticles();
 }
 
-function searchArticles(){
+async function searchArticles(){
+
 let q=document.getElementById("search").value.toLowerCase();
-let filtered=articles.filter(a=>a.title.toLowerCase().includes(q)||a.text.toLowerCase().includes(q));
-showArticles(filtered);
+
+let snapshot = await db.collection("articles").get();
+
+let html="<h2>Articles</h2>";
+
+snapshot.forEach(doc=>{
+let a = doc.data();
+
+if(a.title.toLowerCase().includes(q) || a.text.toLowerCase().includes(q)){
+
+html+=`
+<div class="article">
+<h3>${a.title}</h3>
+<small>by ${a.author}</small>
+<p>${a.text}</p>
+</div>
+`;
+
 }
 
-function showStats(){
+});
+
+document.getElementById("content").innerHTML=html;
+
+}
+
+async function showStats(){
 if(!currentUser){showLogin();return}
 
-let totalUsers = users.length;
-let totalArticles = articles.length;
+let snapshot = await db.collection("articles").get();
+
+let totalArticles = snapshot.size;
 
 let perAuthor = {};
-articles.forEach(a=>{
-if(!perAuthor[a.author]) perAuthor[a.author]=0;
+
+snapshot.forEach(doc=>{
+let a = doc.data();
+
+if(!perAuthor[a.author]){
+perAuthor[a.author] = 0;
+}
+
 perAuthor[a.author]++;
 });
+
+let ranking = Object.entries(perAuthor).sort((a,b)=>b[1]-a[1]);
+
+let html = `
+<h2>Wiki Statistics</h2>
+<p><b>Total articles:</b> ${totalArticles}</p>
+
+<h3>Top Contributors</h3>
+`;
+
+ranking.forEach((user,i)=>{
+html += `<p>#${i+1} ${user[0]} — ${user[1]} articles</p>`;
+});
+
+document.getElementById("content").innerHTML = html;
+
+}
+
+perAuthor[a.author]++;
+});
+
+let html = `
+<h2>Wiki Statistics</h2>
+<p><b>Total articles:</b> ${totalArticles}</p>
+<h3>Articles per user</h3>
+`;
+
+for(let author in perAuthor){
+html += `<p>${author}: ${perAuthor[author]}</p>`;
+}
+
+document.getElementById("content").innerHTML = html;
+}
 
 let html = `<h2>Wiki Statistics</h2>
 <p><b>Registered users:</b> ${totalUsers}</p>
@@ -196,6 +292,10 @@ if(currentUser){
 showArticles();
 }else{
 showLogin();
+}
+  async function deleteArticle(id){
+await db.collection("articles").doc(id).delete();
+showArticles();
 }
 
 </script>
@@ -239,4 +339,5 @@ async function deletePost(postId) {
 
 </body>
 </html>
+
 
